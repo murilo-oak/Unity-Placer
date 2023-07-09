@@ -25,7 +25,7 @@ To instantiate the selected objects in the scene camera, simply toggle the desir
 1. Clone the Unity Placer repository to your preferred location:
 
    ```
-   git clone https://github.com/your-username/unity-placer.git
+   git clone https://github.com/murilo-oak/Unity-Placer.git
    ```
 
 2. Open the Unity Hub and add the "unity-placer" project by clicking "Add" and selecting the cloned folder.
