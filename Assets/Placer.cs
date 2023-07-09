@@ -16,22 +16,26 @@ public class Placer : EditorWindow
     [MenuItem("Tools/Placer")]
     public static void OpenWindow() => GetWindow<Placer>();
     
+    //Placer Radius
     private const float minRadius = 0.1f;
     [Min(minRadius)]
     public float radius = 1f;
     
+    //Spawn Prefabs count
     [Min(0)]
     public int spawnCount = 10;
     
-    public GameObject myPrefab;
+    //Array of prefabs that user can choose to spawn
+    private GameObject[] prefabs;
+    
+    //List of prefabs that user can chose to spawn
     private List<GameObject> selectedPrefabs = new List<GameObject>();
-
+    
+    
     SerializedObject so;
     SerializedProperty propRadius;
     SerializedProperty propSpawnCount;
     SerializedProperty propseletedPrefabs;
-
-    private GameObject[] prefabs;
     public struct PrefabData
     {
         public GameObject prefab;
@@ -123,7 +127,78 @@ public class Placer : EditorWindow
         // If ray from mouse hits a surface
         if (Physics.Raycast(rayFromMouse, out RaycastHit hit))
         {
-            Transform camTf = sceneView.camera.transform;
+            DrawCircleAndPrefabsThenTrySpawnPrefabs(sceneView, hit);
+        }
+    }
+    void  DrawPrefabsIconsOnViewScreen()
+    {
+        Handles.BeginGUI();
+        
+        // Define the frame sizes
+        Rect rectButton = new Rect(8, 16, 64, 64);
+        Rect rectToggle = new Rect(8, 16, 60, 60);
+
+        foreach (GameObject prefab in prefabs)
+        {
+            // Get the preview icon of the prefab
+            Texture2D icon = AssetPreview.GetAssetPreview(prefab);
+            
+            // Check if the button is pressed
+            if (GUI.Button(rectButton, GUIContent.none))
+            {
+                // If the prefab is selected, remove the prefab from the selected prefabs list
+                if (selectedPrefabs.Contains(prefab))
+                {
+                    selectedPrefabs.Remove(prefab);
+                    Repaint();
+                }
+                else  // Otherwise, add it to the selected prefabs list
+                {
+                    selectedPrefabs.Add(prefab);
+                    Repaint();
+                }
+                GenerateSpawnPoints();
+            }
+
+            GUI.Toggle(rectToggle, selectedPrefabs.Contains(prefab), icon);
+            rectButton.y += rectButton.height + 3;
+            rectToggle.y += rectButton.height + 3;
+        }
+        
+        Handles.EndGUI();
+    }
+    void  HandleInput()
+    {
+        // If mouse moves
+        if (Event.current.type == EventType.MouseMove)
+        {
+            //repaint scene view
+            SceneView.currentDrawingSceneView.Repaint();
+        }
+
+        bool isHoldingAlt = (Event.current.modifiers & EventModifiers.Alt) != 0;
+        
+        // If placer is active, and alt is not pressed, and there is a scroll event
+        // change radius of placer
+        if (Event.current.type == EventType.ScrollWheel && !isHoldingAlt)    
+        {
+            float signScroll = Mathf.Sign(Event.current.delta.y);
+            
+            so.Update();
+            propRadius.floatValue *= 1f + signScroll * 0.05f;
+            
+            //clamp with minimum radius possible
+            propRadius.floatValue = Mathf.Clamp(propRadius.floatValue, minRadius, float.MaxValue);
+            
+            so.ApplyModifiedProperties();
+            
+            Repaint();
+            Event.current.Use(); //consumes event
+        }
+    }
+    void DrawCircleAndPrefabsThenTrySpawnPrefabs(SceneView sceneView, RaycastHit hit)
+    {
+        Transform camTf = sceneView.camera.transform;
             
             // Calculate Tangent Space of hit point from mouse
             Vector3 hitNormal = hit.normal;
@@ -181,71 +256,6 @@ public class Placer : EditorWindow
             }
             
             pointsToSpawnPrefabs.Clear();
-        }
-    }
-    
-    void  HandleInput()
-    {
-        // If mouse moves
-        if (Event.current.type == EventType.MouseMove)
-        {
-            //repaint scene view
-            SceneView.currentDrawingSceneView.Repaint();
-        }
-
-        bool isHoldingAlt = (Event.current.modifiers & EventModifiers.Alt) != 0;
-        
-        // If placer is active, and alt is not pressed, and there is a scroll event
-        // change radius of placer
-        if (Event.current.type == EventType.ScrollWheel && !isHoldingAlt)    
-        {
-            float signScroll = Mathf.Sign(Event.current.delta.y);
-            
-            so.Update();
-            propRadius.floatValue *= 1f + signScroll * 0.05f;
-            
-            //clamp with minimum radius possible
-            propRadius.floatValue = Mathf.Clamp(propRadius.floatValue, minRadius, float.MaxValue);
-            
-            so.ApplyModifiedProperties();
-            
-            Repaint();
-            Event.current.Use(); //consumes event
-        }
-    }
-    void  DrawPrefabsIconsOnViewScreen()
-    {
-        Handles.BeginGUI();
-        
-        //defines size of frame
-        Rect rectButton = new Rect(8, 16, 64, 64);
-        Rect rectToggle = new Rect(8, 16, 60, 60);
-
-        foreach (GameObject prefab in prefabs)
-        {
-            Texture2D icon = AssetPreview.GetAssetPreview(prefab);
-
-            if (GUI.Button(rectButton, GUIContent.none))
-            {
-                if (!selectedPrefabs.Contains(prefab))
-                {
-                    selectedPrefabs.Add(prefab);
-                    Repaint();
-                }
-                else
-                {
-                    selectedPrefabs.Remove(prefab);
-                    Repaint();
-                }
-                GenerateSpawnPoints();
-            }
-
-            GUI.Toggle(rectToggle, selectedPrefabs.Contains(prefab), icon);
-            rectButton.y += rectButton.height + 3;
-            rectToggle.y += rectButton.height + 3;
-        }
-        
-        Handles.EndGUI();
     }
     void  DrawPreviewPrefabMeshes(Vector3 position, Quaternion rotation, GameObject prefab)
     {
@@ -311,40 +321,6 @@ public class Placer : EditorWindow
             }
         }
     }
-    float CalculateObjectHeight(GameObject prefab)
-    {
-        if (prefab != null)
-        {
-            // Get all MeshFilters in the prefab and its children
-            MeshFilter[] filters = prefab.GetComponentsInChildren<MeshFilter>();
-
-            float maxHeight = 0f;
-
-            // Find the maximum height among the vertices of the meshes
-            foreach (MeshFilter filter in filters)
-            {
-                Transform filterTf = filter.transform;
-                Mesh mesh = filter.sharedMesh;
-                
-                // Get the local-to-world transformation matrix of the filter's transform
-                Matrix4x4 localMatrix = filterTf.localToWorldMatrix;
-                
-                // Calculate the height based on the position and scale of the filter's transform and the bounds of the
-                // mesh
-                float height = filterTf.position.y + (mesh.bounds.max.y * localMatrix.lossyScale.y);
-                
-                // Update the maxHeight if the current height is greater
-                if (height > maxHeight)
-                {
-                     maxHeight = height;
-                }
-            }
-            
-            return maxHeight;
-        }
-
-        return 0;
-    }
     void  TrySpawnPoints()
     {
         foreach (SpawnData hitPoint in pointsToSpawnPrefabs)
@@ -407,6 +383,40 @@ public class Placer : EditorWindow
                 }
             }
         }
+    }
+    float CalculateObjectHeight(GameObject prefab)
+    {
+        if (prefab != null)
+        {
+            // Get all MeshFilters in the prefab and its children
+            MeshFilter[] filters = prefab.GetComponentsInChildren<MeshFilter>();
+
+            float maxHeight = 0f;
+
+            // Find the maximum height among the vertices of the meshes
+            foreach (MeshFilter filter in filters)
+            {
+                Transform filterTf = filter.transform;
+                Mesh mesh = filter.sharedMesh;
+                
+                // Get the local-to-world transformation matrix of the filter's transform
+                Matrix4x4 localMatrix = filterTf.localToWorldMatrix;
+                
+                // Calculate the height based on the position and scale of the filter's transform and the bounds of the
+                // mesh
+                float height = filterTf.position.y + (mesh.bounds.max.y * localMatrix.lossyScale.y);
+                
+                // Update the maxHeight if the current height is greater
+                if (height > maxHeight)
+                {
+                    maxHeight = height;
+                }
+            }
+            
+            return maxHeight;
+        }
+
+        return 0;
     }
 }
 
