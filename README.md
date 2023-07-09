@@ -33,20 +33,20 @@ To instantiate the selected objects in the scene camera, simply toggle the desir
 3. Select the "unity-placer" project in the Unity Hub and wait for Unity to load the project.
 
 4. Now you can access the `Tools` tab in the upper corner of the Unity interface to use the "Placer" tool.
+  
+   ![Unity Placer Banner](public/Screenshot2.png)
 
-5. In the Unity interface, click on the `Tools` tab in the upper corner.
+7. Select the "Placer" tool in the `Tools` tab.
 
-6. Select the "Placer" tool in the `Tools` tab.
+8. Set the quantity of assets to be instantiated and adjust the radius using the mouse scroll to increase or decrease the value.
 
-7. Set the quantity of assets to be instantiated and adjust the radius using the mouse scroll to increase or decrease the value.
+9. If you want to use the mouse scroll to zoom in the scene, press the `Alt` key.
 
-8. If you want to use the mouse scroll to zoom in the scene, press the `Alt` key.
+10. Toggle the desired objects using the toggle feature.
 
-9. Toggle the desired objects using the toggle feature.
+11. Press the `spacebar` to instantiate the selected objects within the defined area determined by the radius. Make sure you have the Scene View selected.
 
-10. Press the `spacebar` to instantiate the selected objects within the defined area determined by the radius, ensuring collision detection to avoid overlapping or clipping.
-
-11. To undo the instantiation action, press the `Ctrl + Z` keys.
+12. To undo the instantiation action, press the `Ctrl + Z` keys.
 
 ## License 📄
 
