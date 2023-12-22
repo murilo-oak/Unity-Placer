@@ -1,11 +1,9 @@
 ﻿# Unity Placer
 
-## Description 📝
-
 https://github.com/murilo-oak/Unity-Placer/assets/48266939/d073c2bb-a668-4b31-8134-0b64acfd2b9e
 
 
-
+## Description 📝
 This repository contains a script that allows the user to instantiate prefabs from the "Assets/Prefabs" folder. The main functionality of this script is the Placer tool, which can be accessed through a new tab called "Tools" located in the upper corner of the Unity interface.
 
 This tool is based on an assignment from the course "Intro to Tool Dev in Unity," which is part of the following playlist: [Intro to Tool Dev in Unity](https://www.youtube.com/playlist?list=PLImQaTpSAdsBKEkUvKxw6p0tpwl7ylw0d).
